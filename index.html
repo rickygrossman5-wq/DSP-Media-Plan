@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLTFRM — DSP Media Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f9f9f7;--surface:#ffffff;--surface2:#f4f4f1;--surface3:#edede9;
+  --text:#111110;--text2:#5c5c58;--text3:#a0a09a;
+  --green:#17793b;--green-bg:#eef7f2;
+  --amber:#9a5a00;
+  --red:#c0201f;
+  --blue:#1a4ecc;--blue-bg:#eef2fc;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);--border3:rgba(0,0,0,0.28);
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --font-ui:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --font-brand:'Bebas Neue',sans-serif;
+  --r:8px;--rs:4px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#111110;--surface:#1a1a18;--surface2:#222220;--surface3:#2c2c2a;
+    --text:#f0f0ee;--text2:#9a9a95;--text3:#5a5a58;
+    --green:#3dc870;--green-bg:#0d2a1a;
+    --amber:#e8aa44;--red:#ff6666;
+    --blue:#6699ee;--blue-bg:#0d1a3a;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--border3:rgba(255,255,255,0.26);
+  }
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:13px;min-height:100vh}
+input,select{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rs);font-family:var(--font-ui);font-size:12px;padding:6px 10px;outline:none;color:var(--text);width:100%;transition:border-color 0.15s}
+input:focus,select:focus{border-color:var(--border3);box-shadow:0 0 0 2px rgba(0,0,0,0.06)}
+input::placeholder{color:var(--text3)}
+input[type=number]{text-align:right;font-family:var(--font-mono);-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+.ti{font-size:16px}
+.tbl-input{background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;font-family:var(--font-mono);font-size:11px;padding:2px 0;color:var(--text);text-align:right;width:100%;outline:none}
+.tbl-input:focus{border-bottom-color:var(--border3)}
+.tbl-input::placeholder{color:var(--text3)}
+.tbl-input::-webkit-inner-spin-button,.tbl-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.tbl-input{-moz-appearance:textfield}
+button{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rs);padding:7px 14px;cursor:pointer;color:var(--text);font-family:var(--font-ui);font-size:12px;font-weight:500;transition:all 0.12s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button:hover{background:var(--surface2);border-color:var(--border3)}
+button:active{transform:scale(0.98)}
+button:disabled{opacity:0.28;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text);font-family:var(--font-brand);letter-spacing:3px;font-size:14px;padding:10px 36px;border-radius:0}
+.btn-primary:hover{opacity:0.85}
+.btn-primary:disabled{opacity:0.25}
+.dz{border:1.5px dashed var(--border2);border-radius:var(--r);padding:18px 14px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:90px;transition:all 0.15s;background:var(--surface)}
+.dz:hover,.dz.over{border-color:var(--border3);background:var(--surface2);border-style:solid}
+.dz.done{border:1px solid var(--border2);background:var(--surface2);border-style:solid}
+.dz i{font-size:18px;color:var(--text3)}
+.dz.done i.ok{color:var(--green)}
+.dz .fname{font-size:9.5px;color:var(--text2);font-family:var(--font-mono);word-break:break-all;max-width:100%;padding:0 6px;line-height:1.5}
+.dz .dz-info{font-size:10.5px;color:var(--green);font-weight:500}
+.dz .dz-hint{font-size:10.5px;color:var(--text3)}
+.tag{display:inline-block;font-size:9px;font-weight:500;padding:2px 5px;border-radius:3px;border:1px solid var(--border2);color:var(--text3);line-height:1.4}
+.tag-p{display:inline-block;font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;background:var(--blue-bg);color:var(--blue);line-height:1.4}
+table{border-collapse:collapse;width:100%;min-width:1280px}
+thead th{position:sticky;top:0;z-index:2;background:var(--surface2);border-bottom:1px solid var(--border2);font-size:10px;font-weight:600;letter-spacing:0.4px;color:var(--text2);padding:10px 12px;white-space:nowrap;user-select:none;text-transform:uppercase}
+thead th.sort{cursor:pointer}
+thead th.sort:hover{background:var(--surface3);color:var(--text)}
+thead th.sorted{background:var(--surface3);color:var(--text)}
+thead th.stk{position:sticky;left:0;z-index:3;background:var(--surface2)}
+thead th.sorted.stk{background:var(--surface3)}
+.sind{margin-left:4px;opacity:0.35;font-size:9px;font-style:normal}
+th.sorted .sind{opacity:1}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.08s}
+tbody tr.nb{background:var(--surface)}
+tbody tr.bb{background:var(--surface2)}
+tbody tr:hover{background:var(--blue-bg)!important}
+tbody tr:hover .stk{background:var(--blue-bg)!important}
+tbody td{padding:7px 12px;font-size:11px;vertical-align:middle}
+tbody td.stk{position:sticky;left:0;z-index:1}
+tr.nb td.stk{background:var(--surface)}
+tr.bb td.stk{background:var(--surface2)}
+tfoot tr{background:var(--surface2);border-top:1.5px solid var(--border2)}
+tfoot td{padding:10px 12px;font-size:11px;font-weight:500}
+tfoot td.stk{position:sticky;left:0;z-index:1;background:var(--surface2)}
+.stat{display:flex;flex-direction:column;gap:3px}
+.stat-lbl{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+.stat-val{font-size:16px;font-weight:500;font-family:var(--font-mono);letter-spacing:-0.3px}
+.sbar{display:flex;flex-direction:column;gap:5px;min-width:130px}
+.sbar-track{height:3px;background:var(--border);border-radius:2px;position:relative}
+.sbar-fill{position:absolute;left:0;top:0;height:100%;border-radius:2px;transition:width 0.22s}
+.sbar-tgt{position:absolute;top:-3px;width:1px;height:9px;background:var(--border3)}
+.sbar-meta{display:flex;justify-content:space-between;align-items:baseline}
+.sbar-lbl{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px}
+.sbar-pct{font-size:11px;font-family:var(--font-mono);font-weight:500}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;padding:10px 20px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;transition:all 0.12s;gap:8px}
+.tab-btn:hover{color:var(--text2);background:none;border-color:var(--border2)}
+.tab-btn.on{color:var(--text);border-bottom-color:var(--text)}
+.tab-btn:active{transform:none}
+.sep{width:1px;height:28px;background:var(--border2);flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const {useState,useCallback,useMemo}=React;
+const e=React.createElement;
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const Mo=m=>MONTHS[m];const Mo3=m=>MONTHS[m].slice(0,3);
+
+function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
+function parseDateFromFilename(name){
+  const m=name.match(/_(\d{4})(\d{2})(\d{2})\d+_/);
+  if(m)return{year:+m[1],month:+m[2]-1,day:+m[3]};
+  const n=new Date();return{year:n.getFullYear(),month:n.getMonth(),day:n.getDate()};
+}
+async function parseDSP(file){
+  return new Promise(res=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'binary'});
+        const sh=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(sh,{header:1});
+        if(rows.length<2){res([]);return;}
+        const hn=rows[0].map(h=>String(h||'').trim().toLowerCase());
+        const g=n=>hn.indexOf(n);
+        const F={name:g('ad group name'),cost:g('total cost'),budget:g('line item budget'),ecpm:g('ecpm'),ctr:g('ctr'),roas:g('roas'),ntb:g('new-to-brand roas'),dpvr:g('dpvr')};
+        res(rows.slice(1).filter(r=>r[F.name]).map(r=>({
+          name:String(r[F.name]).trim().replace(/\s+/g,' '),
+          cost:+(r[F.cost])||0,budget:+(r[F.budget])||0,
+          ecpm:+(r[F.ecpm])||0,ctr:+(r[F.ctr])||0,roas:+(r[F.roas])||0,ntb:+(r[F.ntb])||0,dpvr:+(r[F.dpvr])||0
+        })));
+      }catch(err){res([]);}
+    };
+    r.readAsBinaryString(file);
+  });
+}
+function mergeItems(mtd,lt,de,dr){
+  const dim=de+dr;
+  const lm={};lt.forEach(r=>{lm[r.name]=r;});
+  return mtd.map((m,i)=>{
+    const l=lm[m.name]||{cost:0,budget:0};
+    const bnb=m.name.split('|').map(p=>p.trim()).find(p=>p==='B'||p==='NB')||'NB';
+    const isPerf=/performance/i.test(m.name);
+    const dailyRate=de>0?m.cost/de:0;
+    const estRem=dailyRate*dr;
+    return{id:i,name:m.name,bnb,isPerf,mtdSpend:m.cost,ltSpend:l.cost,dailyRate,estMonthTotal:dailyRate*dim,estRem,estEomLt:l.cost+estRem,budget:'',ecpm:m.ecpm,ctr:m.ctr,roas:m.roas,ntb:m.ntb,dpvr:m.dpvr};
+  });
+}
+function calcSplits(its){
+  const total=its.reduce((s,i)=>s+(parseFloat(i.budget)||0),0);
+  const nb=its.filter(i=>i.bnb==='NB').reduce((s,i)=>s+(parseFloat(i.budget)||0),0);
+  const b=its.filter(i=>i.bnb==='B').reduce((s,i)=>s+(parseFloat(i.budget)||0),0);
+  const perf=its.filter(i=>i.isPerf).reduce((s,i)=>s+(parseFloat(i.budget)||0),0);
+  return{total,nb,b,perf,nbPct:total?nb/total:0,bPct:total?b/total:0,perfPct:total?perf/total:0};
+}
+const newProj=i=>i.estEomLt+(parseFloat(i.budget)||0);
+const f2=n=>{const v=+n;return(v||v===0)?'$'+v.toFixed(2):'—'};
+const fK=n=>{const v=+n;if(!v&&v!==0)return'—';return Math.abs(v)>=1000?'$'+(v/1000).toFixed(1)+'k':'$'+Math.abs(v).toFixed(0)};
+const fX=n=>{const v=+n;return v?v.toFixed(2)+'x':'—'};
+const fD=n=>{const v=+n;return v?(v*100).toFixed(3)+'%':'—'};
+const fC=n=>{const v=+n;return v?(v*100).toFixed(2)+'%':'—'};
+const fEC=n=>{const v=+n;return v?'$'+v.toFixed(2):'—'};
+
+const EMPTY_PKG=()=>({fns:{mtd:null,lt:null},infos:{mtd:null,lt:null},rawFiles:{mtd:null,lt:null},items:[],budget:'',sort:{key:'name',dir:'asc'}});
+
+// ---------- SPLIT BAR ----------
+function SplitBar({pct,target,label}){
+  const hit=pct>0&&Math.abs(pct-target)<=0.05;
+  const col=pct===0?'var(--text3)':hit?'var(--green)':'var(--amber)';
+  return e('div',{className:'sbar'},
+    e('div',{className:'sbar-meta'},
+      e('span',{className:'sbar-lbl'},label),
+      e('span',{className:'sbar-pct',style:{color:col}},pct>0?(pct*100).toFixed(0)+'%':'—')
+    ),
+    e('div',{className:'sbar-track'},
+      pct>0&&e('div',{className:'sbar-fill',style:{width:Math.min(pct,1)*100+'%',background:hit?'var(--green)':'var(--text)'}}),
+      e('div',{className:'sbar-tgt',style:{left:(target*100)+'%'}})
+    )
+  );
+}
+
+// ---------- UPLOAD SCREEN ----------
+function UploadScreen({pkgs,brand,setBrand,priorM,setPriorM,planM,setPlanM,onDrop,onProceed,dateInfo}){
+  const [drag,setDrag]=useState({conv_mtd:false,conv_lt:false,con_mtd:false,con_lt:false});
+  const canProceed=(pkgs.conv.fns.mtd&&pkgs.conv.fns.lt)||(pkgs.con.fns.mtd&&pkgs.con.fns.lt);
+
+  const DZ=({pkg,type,hint})=>{
+    const dk=`${pkg}_${type}`;
+    const done=!!pkgs[pkg].fns[type];
+    const info=pkgs[pkg].infos[type];
+    const fname=pkgs[pkg].fns[type];
+    return e('div',{
+      className:`dz${drag[dk]?' over':''}${done?' done':''}`,
+      onClick:()=>document.getElementById(`fi-${dk}`).click(),
+      onDragOver:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:true}))},
+      onDragLeave:()=>setDrag(d=>({...d,[dk]:false})),
+      onDrop:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:false}));onDrop(ev.dataTransfer.files[0],pkg,type);}
+    },
+      e('input',{id:`fi-${dk}`,type:'file',accept:'.xlsx',style:{display:'none'},onChange:ev=>onDrop(ev.target.files[0],pkg,type)}),
+      done
+        ? e('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:4}},
+            e('i',{className:'ti ti-circle-check ok',style:{color:'var(--green)'}}),
+            e('div',{className:'fname'},fname),
+            info&&e('div',{className:'dz-info'},info)
+          )
+        : e('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:5}},
+            e('i',{className:'ti ti-upload'}),
+            e('div',{style:{fontWeight:500,color:'var(--text2)',fontSize:12}},'Drop or click'),
+            e('div',{className:'dz-hint'},hint)
+          )
+    );
+  };
+
+  const PkgSection=({pkg,label})=>e('div',{style:{background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:10,padding:'22px 22px',boxShadow:'var(--shadow)',borderRadius:10}},
+    e('div',{style:{fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}},label),
+    e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+      e('div',null,
+        e('div',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',marginBottom:6}},`MTD Report`),
+        e(DZ,{pkg,type:'mtd',hint:'Current month spend & metrics'})
+      ),
+      e('div',null,
+        e('div',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',marginBottom:6}},'Lifetime Report'),
+        e(DZ,{pkg,type:'lt',hint:'Cumulative all-time spend'})
+      )
+    )
+  );
+
+  return e('div',{style:{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'40px 24px'}},
+    e('div',{style:{width:'100%',maxWidth:700}},
+      e('div',{style:{marginBottom:36}},
+        e('div',{style:{fontFamily:'var(--font-brand)',fontSize:48,letterSpacing:12,lineHeight:1,marginBottom:6}},'PLTFRM'),
+        e('div',{style:{fontSize:13,color:'var(--text3)'}},'DSP Media Planner')
+      ),
+      e('div',{style:{background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:10,padding:'22px 22px',marginBottom:16,boxShadow:'var(--shadow)'}},
+        e('div',{style:{fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}},'Plan Details'),
+        e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}},
+          e('div',null,e('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:6}},'Brand'),e('input',{type:'text',value:brand,onChange:ev=>setBrand(ev.target.value),placeholder:'e.g. Puori'})),
+          e('div',null,e('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:6}},'Prior Month'),e('select',{value:priorM,onChange:ev=>setPriorM(+ev.target.value)},MONTHS.map((m,i)=>e('option',{key:i,value:i},m)))),
+          e('div',null,e('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:6}},'Plan Month'),e('select',{value:planM,onChange:ev=>setPlanM(+ev.target.value)},MONTHS.map((m,i)=>e('option',{key:i,value:i},m))))
+        )
+      ),
+      e('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:28}},
+        e(PkgSection,{pkg:'conv',label:'Conversion'}),
+        e(PkgSection,{pkg:'con',label:'Consideration'})
+      ),
+      e('div',{style:{display:'flex',justifyContent:'flex-end'}},
+        e('button',{className:'btn-primary',disabled:!canProceed,onClick:onProceed},'Generate Plan →')
+      )
+    )
+  );
+}
+
+// ---------- PLAN TABLE ----------
+function PlanTable({items,onSetBudget,planM,sort,onSort}){
+  const si=k=>sort.key===k?(sort.dir==='asc'?'↑':'↓'):'↕';
+  const TH=({label,k,cls,style:st})=>e('th',{
+    className:`sort${sort.key===k?' sorted':''}${cls?' '+cls:''}`,
+    style:st,onClick:()=>onSort(k)
+  },label,e('i',{className:'sind'},si(k)));
+
+  const tots=items.reduce((a,i)=>({
+    mtd:a.mtd+i.mtdSpend,est:a.est+i.estMonthTotal,
+    lt:a.lt+i.ltSpend,eo:a.eo+i.estEomLt,
+    b:a.b+(parseFloat(i.budget)||0),p:a.p+newProj(i)
+  }),{mtd:0,est:0,lt:0,eo:0,b:0,p:0});
+
+  const COL_WIDTHS=[270,50,104,108,104,116,120,120,82,74,82,92,76];
+
+  return e('div',{style:{overflowX:'auto'}},
+    e('table',{style:{minWidth:COL_WIDTHS.reduce((a,b)=>a+b,0)}},
+      e('colgroup',null,COL_WIDTHS.map((w,i)=>e('col',{key:i,style:{width:w,minWidth:w}}))),
+      e('thead',null,e('tr',null,
+        e('th',{className:`sort stk${sort.key==='name'?' sorted':''}`,style:{textAlign:'left'},onClick:()=>onSort('name')},
+          'Line Item',e('i',{className:'sind'},si('name'))),
+        e('th',{style:{textAlign:'center'}},''),
+        e(TH,{label:'MTD Spend',k:'mtdSpend',cls:'col-sep',style:{textAlign:'right',borderLeft:'1px solid var(--border2)'}}),
+        e(TH,{label:'Est. Month',k:'estMonthTotal',style:{textAlign:'right'}}),
+        e(TH,{label:'LT Spend',k:'ltSpend',style:{textAlign:'right',borderLeft:'1px solid var(--border2)'}}),
+        e(TH,{label:'Est. EOMonth LT',k:'estEomLt',style:{textAlign:'right'}}),
+        e(TH,{label:Mo3(planM)+' Budget',k:'budget',style:{textAlign:'right',borderLeft:'1px solid var(--border2)'}}),
+        e(TH,{label:'New Proj Spend',k:'projSpend',style:{textAlign:'right'}}),
+        e(TH,{label:'eCPM',k:'ecpm',style:{textAlign:'right',borderLeft:'1px solid var(--border2)'}}),
+        e(TH,{label:'CTR',k:'ctr',style:{textAlign:'right'}}),
+        e(TH,{label:'ROAS',k:'roas',style:{textAlign:'right'}}),
+        e(TH,{label:'NTB ROAS',k:'ntb',style:{textAlign:'right'}}),
+        e(TH,{label:'DPVR',k:'dpvr',style:{textAlign:'right'}})
+      )),
+      e('tbody',null,items.map(item=>{
+        const isNB=item.bnb==='NB';
+        const proj=newProj(item);
+        const hasBud=!!parseFloat(item.budget);
+        const bg=isNB?'var(--surface)':'var(--surface2)';
+        return e('tr',{key:item.id,className:isNB?'nb':'bb'},
+          e('td',{className:'stk',title:item.name,style:{fontFamily:'var(--font-mono)',fontSize:10,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:270}},item.name),
+          e('td',{style:{textAlign:'center'}},
+            e('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:2}},
+              e('span',{className:'tag'},item.bnb),
+              item.isPerf&&e('span',{className:'tag-p'},'P+')
+            )
+          ),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:'var(--text2)',borderLeft:'1px solid var(--border)'}},f2(item.mtdSpend)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight:500}},f2(item.estMonthTotal)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:'var(--text2)',borderLeft:'1px solid var(--border)'}},f2(item.ltSpend)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight:500}},f2(item.estEomLt)),
+          e('td',{style:{textAlign:'right',padding:'4px 12px',borderLeft:'1px solid var(--border)'}},
+            e('input',{type:'number',className:'tbl-input',placeholder:'—',value:item.budget,onChange:ev=>onSetBudget(item.id,ev.target.value)})
+          ),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight:hasBud?600:400,color:hasBud?'var(--text)':'var(--text3)'}},f2(proj)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:'var(--text2)',borderLeft:'1px solid var(--border)'}},fEC(item.ecpm)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:'var(--text2)'}},fC(item.ctr)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:item.roas>=10?'var(--green)':item.roas>=5?'var(--text)':'var(--text2)'}},fX(item.roas)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:item.ntb>=5?'var(--green)':item.ntb>=2?'var(--text)':'var(--text2)'}},fX(item.ntb)),
+          e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:'var(--text2)'}},fD(item.dpvr))
+        );
+      })),
+      e('tfoot',null,e('tr',null,
+        e('td',{className:'stk',style:{fontSize:10,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.4px'}},'Total'),
+        e('td'),
+        e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:'var(--text2)',borderLeft:'1px solid var(--border2)'}},f2(tots.mtd)),
+        e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight:600}},f2(tots.est)),
+        e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',color:'var(--text2)',borderLeft:'1px solid var(--border2)'}},f2(tots.lt)),
+        e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',fontWeight:600}},f2(tots.eo)),
+        e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:12,fontWeight:700,borderLeft:'1px solid var(--border2)'}},f2(tots.b)),
+        e('td',{style:{textAlign:'right',fontFamily:'var(--font-mono)',fontSize:12,fontWeight:700}},f2(tots.p)),
+        e('td',{colSpan:5,style:{borderLeft:'1px solid var(--border2)'}})
+      ))
+    )
+  );
+}
+
+// ---------- APP ----------
+function App(){
+  const [step,setStep]=useState('upload');
+  const [pkgs,setPkgs]=useState({conv:EMPTY_PKG(),con:EMPTY_PKG()});
+  const [brand,setBrand]=useState('');
+  const [priorM,setPriorM]=useState(4);
+  const [planM,setPlanM]=useState(5);
+  const [dateInfo,setDateInfo]=useState({daysElap:19,daysRem:12,dim:31,dailyAvg:0});
+  const [activeTab,setActiveTab]=useState('conv');
+  const [copied,setCopied]=useState(false);
+
+  const onDrop=useCallback((file,pkg,type)=>{
+    if(!file||!file.name.endsWith('.xlsx'))return;
+    setPkgs(p=>({...p,[pkg]:{...p[pkg],fns:{...p[pkg].fns,[type]:file.name},rawFiles:{...p[pkg].rawFiles,[type]:file}}}));
+    if(type==='mtd'){
+      const {year,month,day}=parseDateFromFilename(file.name);
+      const dim=daysInMonth(year,month);
+      const dr=dim-day;
+      setDateInfo(d=>({...d,daysElap:day,daysRem:dr,dim}));
+      setPriorM(month);
+      setPlanM(month===11?0:month+1);
+      setPkgs(p=>({...p,[pkg]:{...p[pkg],infos:{...p[pkg].infos,mtd:`Day ${day} of ${dim}  ·  ${dr} days remaining`}}}));
+    }
+  },[]);
+
+  const onProceed=useCallback(async()=>{
+    const tasks=[];
+    const process=async(pkg)=>{
+      const rf=pkgs[pkg].rawFiles;
+      if(!rf.mtd||!rf.lt)return;
+      const [mtdR,ltR]=await Promise.all([parseDSP(rf.mtd),parseDSP(rf.lt)]);
+      const merged=mergeItems(mtdR,ltR,dateInfo.daysElap,dateInfo.daysRem);
+      const avg=dateInfo.daysElap>0?merged.reduce((s,i)=>s+i.mtdSpend,0)/dateInfo.daysElap:0;
+      setPkgs(p=>({...p,[pkg]:{...p[pkg],items:merged}}));
+      if(pkg==='conv')setDateInfo(d=>({...d,dailyAvg:avg}));
+    };
+    await Promise.all(['conv','con'].map(process));
+    setStep('plan');
+  },[pkgs,dateInfo]);
+
+  const setItemBudget=useCallback((pkg,id,val)=>{
+    setPkgs(p=>({...p,[pkg]:{...p[pkg],items:p[pkg].items.map(i=>i.id===id?{...i,budget:val}:i)}}));
+  },[]);
+
+  const setSort=useCallback((pkg,key)=>{
+    setPkgs(p=>{
+      const cur=p[pkg].sort;
+      const newDir=cur.key===key?(cur.dir==='asc'?'desc':'asc'):(key==='name'?'asc':'desc');
+      return{...p,[pkg]:{...p[pkg],sort:{key,dir:newDir}}};
+    });
+  },[]);
+
+  const setPkgBudget=useCallback((pkg,val)=>{
+    setPkgs(p=>({...p,[pkg]:{...p[pkg],budget:val}}));
+  },[]);
+
+  const activePkg=pkgs[activeTab];
+  const splits=useMemo(()=>calcSplits(activePkg.items),[activePkg.items]);
+
+  const sortedItems=useMemo(()=>{
+    const {key,dir}=activePkg.sort;
+    return [...activePkg.items].sort((a,b)=>{
+      let av=key==='projSpend'?newProj(a):key==='budget'?(parseFloat(a.budget)||0):a[key];
+      let bv=key==='projSpend'?newProj(b):key==='budget'?(parseFloat(b.budget)||0):b[key];
+      if(typeof av==='string')return dir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+      return dir==='asc'?av-bv:bv-av;
+    });
+  },[activePkg.items,activePkg.sort]);
+
+  const tots=useMemo(()=>activePkg.items.reduce((a,i)=>({
+    mtd:a.mtd+i.mtdSpend,est:a.est+i.estMonthTotal,
+    lt:a.lt+i.ltSpend,eo:a.eo+i.estEomLt,
+    b:a.b+(parseFloat(i.budget)||0),p:a.p+newProj(i)
+  }),{mtd:0,est:0,lt:0,eo:0,b:0,p:0}),[activePkg.items]);
+
+  const copyTSV=()=>{
+    const hdr=['Line Item','B/NB','Perf+','MTD Spend','Est. Month','LT Spend','Est. EOMonth LT',Mo(planM)+' Budget','New Proj Spend','eCPM','CTR','ROAS','NTB ROAS','DPVR'];
+    const rows=sortedItems.map(i=>[i.name,i.bnb,i.isPerf?'Yes':'No',f2(i.mtdSpend),f2(i.estMonthTotal),f2(i.ltSpend),f2(i.estEomLt),parseFloat(i.budget)?f2(parseFloat(i.budget)):'',f2(newProj(i)),fEC(i.ecpm),fC(i.ctr),fX(i.roas),fX(i.ntb),fD(i.dpvr)]);
+    const tr=['TOTAL','','',f2(tots.mtd),f2(tots.est),f2(tots.lt),f2(tots.eo),f2(tots.b),f2(tots.p),'','','','',''];
+    navigator.clipboard.writeText([hdr,...rows,tr].map(r=>r.join('\t')).join('\n')).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2500);});
+  };
+
+  if(step==='upload') return e(UploadScreen,{pkgs,brand,setBrand,priorM,setPriorM,planM,setPlanM,onDrop,onProceed,dateInfo});
+
+  const tgt=parseFloat(activePkg.budget)||0;
+  const rem=tgt-splits.total;
+  const TAB_LABELS={conv:'Conversion',con:'Consideration'};
+
+  return e('div',null,
+    // Header
+    e('div',{style:{background:'var(--surface)',borderBottom:'1px solid var(--border2)',padding:'12px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:20,boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}},
+      e('div',{style:{display:'flex',alignItems:'center',gap:16}},
+        e('span',{style:{fontFamily:'var(--font-brand)',fontSize:20,letterSpacing:8,lineHeight:1}},'PLTFRM'),
+        brand&&e('span',{style:{fontSize:12,fontWeight:500,color:'var(--text2)'}},brand),
+        e('span',{style:{fontSize:11,color:'var(--text3)',padding:'3px 8px',background:'var(--surface2)',borderRadius:4,border:'1px solid var(--border)'}},Mo(priorM)+' → '+Mo(planM))
+      ),
+      e('div',{style:{display:'flex',gap:8}},
+        e('button',{onClick:copyTSV},e('i',{className:'ti ti-copy'}),copied?'Copied ✓':'Copy TSV'),
+        e('button',{onClick:()=>setStep('upload')},e('i',{className:'ti ti-arrow-left'}),'Back')
+      )
+    ),
+    // Tabs
+    e('div',{style:{background:'var(--surface)',borderBottom:'1px solid var(--border2)',padding:'0 24px',display:'flex',alignItems:'center',gap:0,position:'sticky',top:'49px',zIndex:19}},
+      ['conv','con'].map(tab=>
+        e('button',{key:tab,className:`tab-btn${activeTab===tab?' on':''}`,onClick:()=>setActiveTab(tab)},
+          TAB_LABELS[tab],
+          pkgs[tab].items.length>0&&e('span',{style:{fontSize:10,color:activeTab===tab?'var(--text3)':'var(--text3)',fontWeight:400}},pkgs[tab].items.length+' lines')
+        )
+      )
+    ),
+    // Summary bar
+    e('div',{style:{background:'var(--surface)',borderBottom:'1px solid var(--border2)',padding:'14px 24px',display:'flex',alignItems:'center',gap:28,flexWrap:'wrap',position:'sticky',top:'97px',zIndex:18}},
+      e('div',{style:{display:'flex',flexDirection:'column',gap:5,minWidth:140}},
+        e('label',{style:{fontSize:10,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'0.5px'}},Mo(planM)+' Target'),
+        e('input',{type:'number',value:activePkg.budget,onChange:ev=>setPkgBudget(activeTab,ev.target.value),placeholder:'0',style:{width:140}})
+      ),
+      e('div',{className:'stat'},
+        e('span',{className:'stat-lbl'},'Allocated'),
+        e('span',{className:'stat-val',style:{fontSize:15,fontWeight:500}},fK(splits.total))
+      ),
+      e('div',{className:'stat'},
+        e('span',{className:'stat-lbl'},'Remaining'),
+        e('span',{className:'stat-val',style:{fontSize:15,color:rem<0&&tgt>0?'var(--red)':'var(--text)'}},tgt?fK(Math.abs(rem)):'—')
+      ),
+      e('div',{className:'stat'},
+        e('span',{className:'stat-lbl'},Mo(priorM)+' Est. Total'),
+        e('span',{className:'stat-val',style:{fontSize:15,color:'var(--text2)'}},fK(tots.est))
+      ),
+      e('div',{className:'sep'}),
+      e(SplitBar,{pct:splits.nbPct,target:0.8,label:'NB — 80% target'}),
+      e(SplitBar,{pct:splits.bPct,target:0.2,label:'B — 20% target'}),
+      e(SplitBar,{pct:splits.perfPct,target:0.1,label:'Perf+ — 10% target'}),
+      e('div',{className:'sep'}),
+      e('div',{style:{fontSize:11,color:'var(--text3)',lineHeight:1.9}},
+        `Day ${dateInfo.daysElap} of ${dateInfo.dim}  ·  ${dateInfo.daysRem} days remaining`,e('br'),
+        dateInfo.dailyAvg>0?`$${dateInfo.dailyAvg.toFixed(0)}/day avg`:''
+      )
+    ),
+    // Table
+    e(PlanTable,{items:sortedItems,onSetBudget:(id,val)=>setItemBudget(activeTab,id,val),planM,sort:activePkg.sort,onSort:k=>setSort(activeTab,k)})
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+</script>
+</body>
+</html>

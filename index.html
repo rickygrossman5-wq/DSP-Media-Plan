@@ -326,7 +326,7 @@ function FinalizePanel({items,planM}){
 }
 
 // ---------- PLAN TABLE ----------
-function PlanTable({items,onSet,planM,srt,onSort}{
+function PlanTable({items,onSet,planM,srt,onSort}){
   const si_=k=>srt.k===k?(srt.d==='asc'?'↑':'↓'):'↕';
   const TH=({lbl,k,st})=>ce('th',{className:`sc${srt.k===k?' sd':''}`,style:st,onClick:()=>onSort(k)},lbl,ce('i',{className:'si'},si_(k)));
   const tots=items.reduce((a,i)=>({m:a.m+i.mtd,e:a.e+i.estM,l:a.l+i.lt,eo:a.eo+i.eoLt,b:a.b+(parseFloat(i.bud)||0),p:a.p+np(i),s:a.s+i.sales,ns:a.ns+i.ntbSales}),{m:0,e:0,l:0,eo:0,b:0,p:0,s:0,ns:0});
@@ -495,7 +495,7 @@ function App(){
       ce('div',{className:'sep'}),
       // Est month
       ce('div',{style:{display:'flex',flexDirection:'column',gap:2}},
-        ce('span',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.5px'}},Mo(priorM)+' Est. Total'),
+        ce('span',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.5px'}},(priorM!==null?Mo(priorM):'Prior')+' Est. Total'),
         ce('span',{style:{fontSize:15,fontFamily:'var(--fmono)',color:'var(--text2)'}},fK(tots.e))
       ),
       ce('div',{className:'sep'}),
@@ -506,7 +506,7 @@ function App(){
         di.avg>0?`$${di.avg.toFixed(0)}/day avg`:''
       )
     ),
-    ce(PlanTable,{items:sortedItems,onSet:(id,v)=>setIB(tab,id,v),planM,srt:ap.srt,onSort:k=>setSort(tab,k)},
+    ce(PlanTable,{items:sortedItems,onSet:(id,v)=>setIB(tab,id,v),planM,srt:ap.srt,onSort:k=>setSort(tab,k)}),
     ce(FinalizePanel,{items:ap.items,planM})
   );
 }

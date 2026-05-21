@@ -243,9 +243,9 @@ function AllocBar({sp}){
 }
 
 // ---------- UPLOAD SCREEN ----------
-function UploadScreen({pkgs,priorM,setPriorM,planM,setPlanM,onDrop,onProceed}){
+function UploadScreen({pkgs,onDrop,onProceed}){
   const [drag,setDrag]=useState({});
-  const can=priorM!==null&&planM!==null&&((pkgs.conv.fns.mtd&&pkgs.conv.fns.lt)||(pkgs.con.fns.mtd&&pkgs.con.fns.lt));
+  const can=(pkgs.conv.fns.mtd&&pkgs.conv.fns.lt)||(pkgs.con.fns.mtd&&pkgs.con.fns.lt);
   const DZ=({pkg,type,hint})=>{
     const dk=`${pkg}_${type}`;const done=!!pkgs[pkg].fns[type];
     return ce('div',{className:`dz${drag[dk]?' ov':''}${done?' dn':''}`,onClick:()=>document.getElementById('fi'+dk).click(),onDragOver:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:true}))},onDragLeave:()=>setDrag(d=>({...d,[dk]:false})),onDrop:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:false}));onDrop(ev.dataTransfer.files[0],pkg,type);}},
@@ -275,14 +275,7 @@ function UploadScreen({pkgs,priorM,setPriorM,planM,setPlanM,onDrop,onProceed}){
       ce('div',{style:{fontFamily:'var(--fbrand)',fontSize:44,letterSpacing:12,lineHeight:1,marginBottom:4}},'PLTFRM'),
       ce('div',{style:{fontSize:13,color:'var(--text3)'}},'DSP Media Planner')
     ),
-    ce('div',{style:{background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:8,padding:'18px',marginBottom:14,boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}},
-      ce('div',{style:{fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:12}},'Plan Details'),
-      ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}},
-        
-        ce('div',null,ce('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:5}},'Current Month'),ce('select',{value:priorM??'',onChange:ev=>setPriorM(ev.target.value===''?null:+ev.target.value)},ce('option',{value:''},'Select month...'),MO.map((m,i)=>ce('option',{key:i,value:i},m)))),
-        ce('div',null,ce('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:5}},'Plan Month'),ce('select',{value:planM??'',onChange:ev=>setPlanM(ev.target.value===''?null:+ev.target.value)},ce('option',{value:''},'Select month...'),MO.map((m,i)=>ce('option',{key:i,value:i},m))))
-      )
-    ),
+
     ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:24}},
       ce(PS,{pkg:'conv',lbl:'Conversion'}),
       ce(PS,{pkg:'con',lbl:'Consideration'})
@@ -398,9 +391,11 @@ function App(){
   const [step,setStep]=useState('upload');
   const [pkgs,setPkgs]=useState({conv:EP(),con:EP()});
   
-  const [priorM,setPriorM]=useState(null);
-  const [planM,setPlanM]=useState(null);
-  const [di,setDi]=useState({de:19,dr:12,dim:31,avg:0});
+  
+  
+  const [di,setDi]=useState({de:0,dr:0,dim:0,avg:0,month:null});
+  const priorM=di.month;
+  const planM=di.month!==null?(di.month===11?0:di.month+1):null;
   const [tab,setTab]=useState('conv');
   const [cp,setCp]=useState(false);
   
@@ -411,8 +406,8 @@ function App(){
     if(type==='mtd'){
       const {year,month,day}=pfn(file.name);
       const d=daysInMonth(year,month);const dr=d-day;
-      setDi(x=>({...x,de:day,dr,dim:d}));
-      setPriorM(month);setPlanM(month===11?0:month+1);
+      setDi(x=>({...x,de:day,dr,dim:d,month}));
+      
       setPkgs(p=>({...p,[pkg]:{...p[pkg],infos:{...p[pkg].infos,mtd:`Day ${day} of ${d} · ${dr} remaining`}}}));
     }
   },[]);
@@ -461,7 +456,7 @@ function App(){
     navigator.clipboard.writeText([hdr,...rows,tr].map(r=>r.join('\t')).join('\n')).then(()=>{setCp(true);setTimeout(()=>setCp(false),2500);});
   };
 
-  if(step==='upload')return ce(UploadScreen,{pkgs,priorM,setPriorM,planM,setPlanM,onDrop,onProceed:onProc});
+  if(step==='upload')return ce(UploadScreen,{pkgs,onDrop,onProceed:onProc});
 
   return ce('div',null,
     ce('div',{style:{background:'var(--surface)',borderBottom:'1px solid var(--border2)',padding:'11px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:20,boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}},

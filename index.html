@@ -248,7 +248,7 @@ function UploadScreen({pkgs,onDrop,onProceed}){
   const can=(pkgs.conv.fns.mtd&&pkgs.conv.fns.lt)||(pkgs.con.fns.mtd&&pkgs.con.fns.lt);
   const DZ=({pkg,type,hint})=>{
     const dk=`${pkg}_${type}`;const done=!!pkgs[pkg].fns[type];
-    return ce('div',{className:`dz${drag[dk]?' ov':''}${done?' dn':''}`,onClick:()=>document.getElementById('fi'+dk).click(),onDragOver:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:true}))},onDragLeave:()=>setDrag(d=>({...d,[dk]:false})),onDrop:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:false}));onDrop(ev.dataTransfer.files[0],pkg,type);}},
+    return ce('div',{className:`dz${drag[dk]?' ov':''}${done?' dn':''}`,onClick:()=>document.getElementById('fi'+dk).click(),onDragEnter:ev=>{ev.preventDefault();ev.stopPropagation();setDrag(d=>({...d,[dk]:true}))},onDragOver:ev=>{ev.preventDefault();ev.stopPropagation();setDrag(d=>({...d,[dk]:true}))},onDragLeave:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:false}))},onDrop:ev=>{ev.preventDefault();ev.stopPropagation();setDrag(d=>({...d,[dk]:false}));const file=ev.dataTransfer.files&&ev.dataTransfer.files[0];if(file)onDrop(file,pkg,type);}},
       ce('input',{id:'fi'+dk,type:'file',accept:'.xlsx',style:{display:'none'},onChange:ev=>onDrop(ev.target.files[0],pkg,type)}),
       done
         ?ce('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:3}},
@@ -356,7 +356,7 @@ function PlanTable({items,onSet,planM,srt,onSort}){
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:500}},f2(item.estM)),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',borderLeft:'1px solid var(--border)'}},f2(item.lt)),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:500}},f2(item.eoLt)),
-          ce('td',{style:{textAlign:'right',padding:'4px 10px',borderLeft:'1px solid var(--border)'}},ce('input',{type:'number',className:'tbi',placeholder:'—',value:item.bud,onChange:ev=>onSet(item.id,ev.target.value)})),
+          ce('td',{style:{textAlign:'right',padding:'4px 10px',borderLeft:'1px solid var(--border)'}},ce('input',{type:'number',className:'tbi','data-budrow':item.id,placeholder:'—',value:item.bud,onChange:ev=>onSet(item.id,ev.target.value),onKeyDown:ev=>{if(ev.key==='Enter'){ev.preventDefault();const inputs=Array.from(document.querySelectorAll('.tbi[data-budrow]'));const idx=inputs.indexOf(ev.target);if(idx>=0&&idx<inputs.length-1)inputs[idx+1].focus();}}})),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:hb?600:400,color:hb?'var(--text)':'var(--text3)'}},f2(pr)),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',borderLeft:'1px solid var(--border)'}},item.sales>0?f2(item.sales):'—'),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)'}},item.ntbSales>0?f2(item.ntbSales):'—'),
@@ -503,6 +503,7 @@ function App(){
   );
 }
 
+['dragover','drop'].forEach(e=>window.addEventListener(e,ev=>{if(!ev.target.closest('.dz'))ev.preventDefault();},false));
 ReactDOM.createRoot(document.getElementById('root')).render(ce(App));
 </script>
 </body>

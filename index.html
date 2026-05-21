@@ -243,31 +243,64 @@ function AllocBar({sp}){
 }
 
 // ---------- UPLOAD SCREEN ----------
+function DropZone({pkg,type,hint,fns,infos,onFileDrop}){
+  const ref=React.useRef(null);
+  const infoKey=`${pkg}_${type}`;
+  const done=!!fns[pkg][type];
+
+  React.useEffect(()=>{
+    const el=ref.current;
+    if(!el)return;
+    let counter=0;
+    const onDragEnter=ev=>{ev.preventDefault();counter++;el.classList.add('ov');};
+    const onDragOver=ev=>{ev.preventDefault();};
+    const onDragLeave=ev=>{counter--;if(counter<=0){counter=0;el.classList.remove('ov');}};
+    const onDrop=ev=>{
+      ev.preventDefault();counter=0;el.classList.remove('ov');
+      const file=ev.dataTransfer&&ev.dataTransfer.files&&ev.dataTransfer.files[0];
+      if(file)onFileDrop(file,pkg,type);
+    };
+    el.addEventListener('dragenter',onDragEnter);
+    el.addEventListener('dragover',onDragOver);
+    el.addEventListener('dragleave',onDragLeave);
+    el.addEventListener('drop',onDrop);
+    return()=>{
+      el.removeEventListener('dragenter',onDragEnter);
+      el.removeEventListener('dragover',onDragOver);
+      el.removeEventListener('dragleave',onDragLeave);
+      el.removeEventListener('drop',onDrop);
+    };
+  },[pkg,type,onFileDrop]);
+
+  return ce('div',{ref,className:`dz${done?' dn':''}`,onClick:()=>document.getElementById('fidz'+pkg+type).click()},
+    ce('input',{id:'fidz'+pkg+type,type:'file',accept:'.xlsx',style:{display:'none'},onChange:ev=>{if(ev.target.files[0])onFileDrop(ev.target.files[0],pkg,type);}}),
+    done
+      ?ce('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:3}},
+          ce('i',{className:'ti ti-circle-check',style:{fontSize:17,color:'var(--green)'}}),
+          ce('div',{style:{fontFamily:'var(--fmono)',fontSize:9,color:'var(--text2)',wordBreak:'break-all',maxWidth:'100%',padding:'0 4px',lineHeight:1.5}},fns[pkg][type]),
+          infos[pkg][type]&&ce('div',{style:{fontSize:10,color:'var(--green)',fontWeight:500}},infos[pkg][type])
+        )
+      :ce('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:5}},
+          ce('i',{className:'ti ti-upload',style:{fontSize:17,color:'var(--text3)'}}),
+          ce('div',{style:{fontWeight:500,color:'var(--text2)',fontSize:12}},'Drop or click'),
+          ce('div',{style:{fontSize:10,color:'var(--text3)'}},hint)
+        )
+  );
+}
+
 function UploadScreen({pkgs,onDrop,onProceed}){
-  const [drag,setDrag]=useState({});
   const can=(pkgs.conv.fns.mtd&&pkgs.conv.fns.lt)||(pkgs.con.fns.mtd&&pkgs.con.fns.lt);
-  const DZ=({pkg,type,hint})=>{
-    const dk=`${pkg}_${type}`;const done=!!pkgs[pkg].fns[type];
-    return ce('div',{className:`dz${drag[dk]?' ov':''}${done?' dn':''}`,onClick:()=>document.getElementById('fi'+dk).click(),onDragEnter:ev=>{ev.preventDefault();ev.stopPropagation();setDrag(d=>({...d,[dk]:true}))},onDragOver:ev=>{ev.preventDefault();ev.stopPropagation();setDrag(d=>({...d,[dk]:true}))},onDragLeave:ev=>{ev.preventDefault();setDrag(d=>({...d,[dk]:false}))},onDrop:ev=>{ev.preventDefault();ev.stopPropagation();setDrag(d=>({...d,[dk]:false}));const file=ev.dataTransfer.files&&ev.dataTransfer.files[0];if(file)onDrop(file,pkg,type);}},
-      ce('input',{id:'fi'+dk,type:'file',accept:'.xlsx',style:{display:'none'},onChange:ev=>onDrop(ev.target.files[0],pkg,type)}),
-      done
-        ?ce('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:3}},
-            ce('i',{className:'ti ti-circle-check',style:{fontSize:17,color:'var(--green)'}}),
-            ce('div',{style:{fontFamily:'var(--fmono)',fontSize:9,color:'var(--text2)',wordBreak:'break-all',maxWidth:'100%',padding:'0 4px',lineHeight:1.5}},pkgs[pkg].fns[type]),
-            pkgs[pkg].infos[type]&&ce('div',{style:{fontSize:10,color:'var(--green)',fontWeight:500}},pkgs[pkg].infos[type])
-          )
-        :ce('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:5}},
-            ce('i',{className:'ti ti-upload',style:{fontSize:17,color:'var(--text3)'}}),
-            ce('div',{style:{fontWeight:500,color:'var(--text2)',fontSize:12}},'Drop or click'),
-            ce('div',{style:{fontSize:10,color:'var(--text3)'}},hint)
-          )
-    );
-  };
   const PS=({pkg,lbl})=>ce('div',{style:{background:'var(--surface)',border:'1px solid var(--border2)',borderRadius:8,padding:'18px',boxShadow:'0 1px 3px rgba(0,0,0,0.05)'}},
     ce('div',{style:{fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:12}},lbl),
     ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
-      ce('div',null,ce('div',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',marginBottom:5}},'MTD Report'),ce(DZ,{pkg,type:'mtd',hint:'Current month metrics'})),
-      ce('div',null,ce('div',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',marginBottom:5}},'Lifetime Report'),ce(DZ,{pkg,type:'lt',hint:'Cumulative spend'}))
+      ce('div',null,
+        ce('div',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',marginBottom:5}},'MTD Report'),
+        ce(DropZone,{pkg,type:'mtd',hint:'Current month metrics',fns:pkgs,infos:Object.fromEntries(Object.entries(pkgs).map(([k,v])=>([k,v.infos]))),onFileDrop:onDrop})
+      ),
+      ce('div',null,
+        ce('div',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',marginBottom:5}},'Lifetime Report'),
+        ce(DropZone,{pkg,type:'lt',hint:'Cumulative spend',fns:pkgs,infos:Object.fromEntries(Object.entries(pkgs).map(([k,v])=>([k,v.infos]))),onFileDrop:onDrop})
+      )
     )
   );
   return ce('div',{style:{padding:'40px 32px',maxWidth:700,margin:'0 auto'}},
@@ -275,7 +308,6 @@ function UploadScreen({pkgs,onDrop,onProceed}){
       ce('div',{style:{fontFamily:'var(--fbrand)',fontSize:44,letterSpacing:12,lineHeight:1,marginBottom:4}},'PLTFRM'),
       ce('div',{style:{fontSize:13,color:'var(--text3)'}},'DSP Media Planner')
     ),
-
     ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:24}},
       ce(PS,{pkg:'conv',lbl:'Conversion'}),
       ce(PS,{pkg:'con',lbl:'Consideration'})
@@ -286,7 +318,6 @@ function UploadScreen({pkgs,onDrop,onProceed}){
   );
 }
 
-// ---------- FINALIZE PANEL ----------
 function FinalizePanel({items,planM}){
   const [show,setShow]=useState(false);
   const [copied,setCopied]=useState(false);
@@ -503,7 +534,6 @@ function App(){
   );
 }
 
-['dragover','drop'].forEach(e=>window.addEventListener(e,ev=>{if(!ev.target.closest('.dz'))ev.preventDefault();},false));
 ReactDOM.createRoot(document.getElementById('root')).render(ce(App));
 </script>
 </body>

@@ -279,7 +279,7 @@ function UploadScreen({pkgs,priorM,setPriorM,planM,setPlanM,onDrop,onProceed}){
       ce('div',{style:{fontSize:11,fontWeight:600,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:12}},'Plan Details'),
       ce('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}},
         
-        ce('div',null,ce('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:5}},'Prior Month'),ce('select',{value:priorM??'',onChange:ev=>setPriorM(ev.target.value===''?null:+ev.target.value)},ce('option',{value:''},'Select month...'),MO.map((m,i)=>ce('option',{key:i,value:i},m)))),
+        ce('div',null,ce('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:5}},'Current Month'),ce('select',{value:priorM??'',onChange:ev=>setPriorM(ev.target.value===''?null:+ev.target.value)},ce('option',{value:''},'Select month...'),MO.map((m,i)=>ce('option',{key:i,value:i},m)))),
         ce('div',null,ce('label',{style:{fontSize:11,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:5}},'Plan Month'),ce('select',{value:planM??'',onChange:ev=>setPlanM(ev.target.value===''?null:+ev.target.value)},ce('option',{value:''},'Select month...'),MO.map((m,i)=>ce('option',{key:i,value:i},m))))
       )
     ),
@@ -332,7 +332,7 @@ function PlanTable({items,onSet,planM,srt,onSort}){
   const tots=items.reduce((a,i)=>({m:a.m+i.mtd,e:a.e+i.estM,l:a.l+i.lt,eo:a.eo+i.eoLt,b:a.b+(parseFloat(i.bud)||0),p:a.p+np(i),s:a.s+i.sales,ns:a.ns+i.ntbSales}),{m:0,e:0,l:0,eo:0,b:0,p:0,s:0,ns:0});
   const mt=calcMetricTotals(items);
   const hasSales=items.some(i=>i.sales>0);
-  const W=[380,46,100,104,100,116,114,118,100,100,78,70,78,90,74];
+  const W=[380,46,100,104,100,116,114,118,100,100,90,78,74,70];
   return ce('div',{style:{overflowX:'auto'}},
     ce('table',{style:{minWidth:W.reduce((a,b)=>a+b,0)}},
       ce('colgroup',null,W.map((w,i)=>ce('col',{key:i,style:{width:w,minWidth:w}}))),
@@ -347,11 +347,10 @@ function PlanTable({items,onSet,planM,srt,onSort}){
         ce(TH,{lbl:'New Proj Spend',k:'proj',st:{textAlign:'right'}}),
         ce(TH,{lbl:'Product Sales',k:'sales',st:{textAlign:'right',borderLeft:'1px solid var(--border2)'}}),
         ce(TH,{lbl:'NTB Sales',k:'ntbSales',st:{textAlign:'right'}}),
-        ce(TH,{lbl:'eCPM',k:'ecpm',st:{textAlign:'right',borderLeft:'1px solid var(--border2)'}}),
-        ce(TH,{lbl:'CTR',k:'ctr',st:{textAlign:'right'}}),
+        ce(TH,{lbl:'NTB ROAS',k:'ntb',st:{textAlign:'right',borderLeft:'1px solid var(--border2)'}}),
         ce(TH,{lbl:'ROAS',k:'roas',st:{textAlign:'right'}}),
-        ce(TH,{lbl:'NTB ROAS',k:'ntb',st:{textAlign:'right'}}),
-        ce(TH,{lbl:'DPVR',k:'dpvr',st:{textAlign:'right'}})
+        ce(TH,{lbl:'DPVR',k:'dpvr',st:{textAlign:'right'}}),
+        ce(TH,{lbl:'CTR',k:'ctr',st:{textAlign:'right'}})
       )),
       ce('tbody',null,items.map(item=>{
         const isN=item.bnb==='NB';const pr=np(item);const hb=!!parseFloat(item.bud);
@@ -368,11 +367,10 @@ function PlanTable({items,onSet,planM,srt,onSort}){
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:hb?600:400,color:hb?'var(--text)':'var(--text3)'}},f2(pr)),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',borderLeft:'1px solid var(--border)'}},item.sales>0?f2(item.sales):'—'),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)'}},item.ntbSales>0?f2(item.ntbSales):'—'),
-          ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',borderLeft:'1px solid var(--border)'}},fE(item.ecpm)),
-          ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)'}},fC(item.ctr)),
+          ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:itemNtb>=5?'var(--green)':itemNtb>=2?'var(--text)':'var(--text2)',borderLeft:'1px solid var(--border)'}},itemNtb>0?fX(itemNtb):fX(item.ntb)),
           ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:itemRoas>=10?'var(--green)':itemRoas>=5?'var(--text)':'var(--text2)'}},itemRoas>0?fX(itemRoas):fX(item.roas)),
-          ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:itemNtb>=5?'var(--green)':itemNtb>=2?'var(--text)':'var(--text2)'}},itemNtb>0?fX(itemNtb):fX(item.ntb)),
-          ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)'}},fD(item.dpvr))
+          ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)'}},fD(item.dpvr)),
+          ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)'}},fC(item.ctr))
         );
       })),
       ce('tfoot',null,ce('tr',null,
@@ -386,11 +384,10 @@ function PlanTable({items,onSet,planM,srt,onSort}){
         ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontSize:12,fontWeight:700}},f2(tots.p)),
         ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:600,color:'var(--text)',borderLeft:'1px solid var(--border2)'}},tots.s>0?f2(tots.s):'—'),
         ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:600,color:'var(--text)'}},tots.ns>0?f2(tots.ns):'—'),
-        ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',fontSize:10,fontStyle:'italic',borderLeft:'1px solid var(--border2)'}},mt.ecpm>0?fE(mt.ecpm):'—'),
-        ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',fontSize:10,fontStyle:'italic'}},mt.ctr>0?fC(mt.ctr):'—'),
+        ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:700,color:mt.ntb>=5?'var(--green)':mt.ntb>=2?'var(--text)':'var(--text2)',borderLeft:'1px solid var(--border2)'}},mt.ntb>0?fX(mt.ntb):'—'),
         ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:700,color:mt.roas>=10?'var(--green)':mt.roas>=5?'var(--text)':'var(--text2)'}},mt.roas>0?fX(mt.roas):'—'),
-        ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',fontWeight:700,color:mt.ntb>=5?'var(--green)':mt.ntb>=2?'var(--text)':'var(--text2)'}},mt.ntb>0?fX(mt.ntb):'—'),
-        ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',fontSize:10,fontStyle:'italic'}},mt.dpvr>0?fD(mt.dpvr):'—')
+        ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',fontSize:10,fontStyle:'italic'}},mt.dpvr>0?fD(mt.dpvr):'—'),
+        ce('td',{style:{textAlign:'right',fontFamily:'var(--fmono)',color:'var(--text2)',fontSize:10,fontStyle:'italic'}},mt.ctr>0?fC(mt.ctr):'—')
       ))
     )
   );
@@ -456,11 +453,11 @@ function App(){
     const hdr=['Line Item','B/NB','P+','MTD Spend','Est. Month','LT Spend','Est. EOMonth LT',(planM!==null?Mo(planM):'Plan')+' Budget','New Proj','Product Sales','NTB Sales','eCPM','CTR','ROAS','NTB ROAS','DPVR'];
     const rows=sortedItems.map(i=>{
       const ir=i.mtd>0?i.sales/i.mtd:0;const in_=i.mtd>0?i.ntbSales/i.mtd:0;
-      return[i.name,i.bnb,i.isP?'Yes':'No',f2(i.mtd),f2(i.estM),f2(i.lt),f2(i.eoLt),parseFloat(i.bud)?f2(parseFloat(i.bud)):'',f2(np(i)),i.sales>0?f2(i.sales):'—',i.ntbSales>0?f2(i.ntbSales):'—',fE(i.ecpm),fC(i.ctr),ir>0?fX(ir):fX(i.roas),in_>0?fX(in_):fX(i.ntb),fD(i.dpvr)];
+      return[i.name,i.bnb,i.isP?'Yes':'No',f2(i.mtd),f2(i.estM),f2(i.lt),f2(i.eoLt),parseFloat(i.bud)?f2(parseFloat(i.bud)):'',f2(np(i)),i.sales>0?f2(i.sales):'—',i.ntbSales>0?f2(i.ntbSales):'—',in_>0?fX(in_):fX(i.ntb),ir>0?fX(ir):fX(i.roas),fD(i.dpvr),fC(i.ctr)];
     });
     const mt=calcMetricTotals(ap.items);
     const t2=ap.items.reduce((a,i)=>({m:a.m+i.mtd,e:a.e+i.estM,l:a.l+i.lt,eo:a.eo+i.eoLt,b:a.b+(parseFloat(i.bud)||0),p:a.p+np(i),s:a.s+i.sales,ns:a.ns+i.ntbSales}),{m:0,e:0,l:0,eo:0,b:0,p:0,s:0,ns:0});
-    const tr=['TOTAL','','',f2(t2.m),f2(t2.e),f2(t2.l),f2(t2.eo),f2(t2.b),f2(t2.p),t2.s>0?f2(t2.s):'—',t2.ns>0?f2(t2.ns):'—','','',(mt.roas>0?fX(mt.roas):'—'),(mt.ntb>0?fX(mt.ntb):'—'),''];
+    const tr=['TOTAL','','',f2(t2.m),f2(t2.e),f2(t2.l),f2(t2.eo),f2(t2.b),f2(t2.p),t2.s>0?f2(t2.s):'—',t2.ns>0?f2(t2.ns):'—',(mt.ntb>0?fX(mt.ntb):'—'),(mt.roas>0?fX(mt.roas):'—'),'',''];
     navigator.clipboard.writeText([hdr,...rows,tr].map(r=>r.join('\t')).join('\n')).then(()=>{setCp(true);setTimeout(()=>setCp(false),2500);});
   };
 
@@ -495,7 +492,7 @@ function App(){
       ce('div',{className:'sep'}),
       // Est month
       ce('div',{style:{display:'flex',flexDirection:'column',gap:2}},
-        ce('span',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.5px'}},(priorM!==null?Mo(priorM):'Prior')+' Est. Total'),
+        ce('span',{style:{fontSize:10,fontWeight:500,color:'var(--text3)',textTransform:'uppercase',letterSpacing:'.5px'}},(priorM!==null?Mo(priorM):'Current')+' Est. Total'),
         ce('span',{style:{fontSize:15,fontFamily:'var(--fmono)',color:'var(--text2)'}},fK(tots.e))
       ),
       ce('div',{className:'sep'}),

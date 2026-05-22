@@ -329,8 +329,8 @@ function FinalizePanel({items,planM}){
       .filter(i=>parseFloat(i.bud)>0)
       .sort((a,b)=>a.name.localeCompare(b.name))
       .map(i=>{
-        const bud=parseFloat(i.bud);
-        return `${i.name} — $${bud.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        const proj=i.eoLt+(parseFloat(i.bud)||0);
+        return `${i.name} — $${proj.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
       })
       .join('\n');
   },[items]);

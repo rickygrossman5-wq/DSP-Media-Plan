@@ -76,7 +76,7 @@
   .pill-neg { background: rgba(240,82,82,.15); color: var(--red); }
   .pill-neu { background: rgba(255,255,255,.06); color: var(--gray-dim); }
   .tbl { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1380px; }
-  .tbl thead th { padding: 9px 16px; border-bottom: 1px solid var(--line); color: var(--gray-dim); font-family: var(--mono); font-weight: 500; font-size: 9px; text-transform: uppercase; letter-spacing: .09em; text-align: left; white-space: nowrap; background: var(--ink); position: sticky; top: 0; z-index: 2; }
+  .tbl thead th { padding: 9px 16px; border-bottom: 1px solid var(--line); color: var(--gray-dim); font-family: var(--mono); font-weight: 500; font-size: 9px; text-transform: uppercase; letter-spacing: .09em; text-align: left; white-space: nowrap; background: var(--ink); position: sticky; top: 0; z-index: 5; }
   .tbl thead th.num { text-align: right; }
   .tbl thead th.sortable { cursor: pointer; }
   .tbl thead th.sortable:hover, .tbl thead th.on { color: var(--white); }
@@ -435,6 +435,101 @@ function PlanTable({items,onSet,planM,srt,onSort}){
 }
 
 // ---------- APP ----------
+
+// --------------------------------------------------------------------------
+// PRIME DAY / TENTPOLE EVENT PLANNER
+// Standalone budgeting: three phases (Lead up, Event, Lead out) x two packages.
+// User inputs days-per-phase and phase totals; app derives avg daily + % of spend.
+// --------------------------------------------------------------------------
+const PHASES=['leadUp','event','leadOut'];
+const PHASE_LABELS={leadUp:'Lead Up',event:'Event',leadOut:'Lead Out'};
+const EMPTY_EV=()=>({leadUp:'',event:'',leadOut:''});
+
+function fmtMoney(n){
+  const v=+n;if(!v&&v!==0)return '$0.00';
+  return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function EventBreakdown({title,vals,days,onChange,editable}){
+  // vals: {leadUp,event,leadOut} dollar strings; days: {leadUp,event,leadOut} numbers
+  const num=p=>parseFloat(vals[p])||0;
+  const grand=PHASES.reduce((s,p)=>s+num(p),0);
+  const daily=p=>{const d=parseFloat(days[p])||0;return d>0?num(p)/d:0;};
+  const pct=p=>grand>0?num(p)/grand:0;
+
+  return ce('div',{style:{marginBottom:24}},
+    ce('div',{className:'tbl-wrap',style:{margin:0}},
+      ce('table',{className:'tbl',style:{minWidth:680}},
+        ce('thead',null,
+          ce('tr',null,
+            ce('th',{colSpan:5,style:{textAlign:'center',color:'var(--white)',fontSize:11,letterSpacing:'.08em',background:'var(--card-2)'}},title)
+          ),
+          ce('tr',null,
+            ce('th',null,''),
+            ...PHASES.map(p=>ce('th',{key:p,className:'num'},PHASE_LABELS[p])),
+            ce('th',{className:'num'},'Total')
+          )
+        ),
+        ce('tbody',null,
+          // Total spend row (editable inputs if editable)
+          ce('tr',null,
+            ce('td',{style:{fontFamily:'var(--sans)',fontWeight:600,color:'var(--white)'}},title.replace(' DSP Daily Spend Breakdown','')),
+            ...PHASES.map(p=>ce('td',{key:p,className:'num'},
+              editable
+                ? ce('input',{type:'number',className:'tbi',placeholder:'0',value:vals[p],onChange:ev=>onChange(p,ev.target.value),style:{minWidth:90}})
+                : fmtMoney(num(p))
+            )),
+            ce('td',{className:'num',style:{fontWeight:600,color:'var(--white)'}},fmtMoney(grand))
+          ),
+          // Avg daily spend row
+          ce('tr',null,
+            ce('td',{style:{color:'var(--gray)'}},'Avg Daily Spend'),
+            ...PHASES.map(p=>ce('td',{key:p,className:'num',style:{color:'var(--gray)'}},fmtMoney(daily(p)))),
+            ce('td',{className:'num'},'')
+          ),
+          // % of spend row
+          ce('tr',null,
+            ce('td',{style:{fontWeight:600,color:'var(--white)'}},'% of Spend'),
+            ...PHASES.map(p=>ce('td',{key:p,className:'num',style:{color:'var(--gray)'}},grand>0?(pct(p)*100).toFixed(0)+'%':'-')),
+            ce('td',{className:'num'},'')
+          )
+        )
+      )
+    )
+  );
+}
+
+function EventPlanner({ev,setEv,days,setDays}){
+  // ev = {conv:{leadUp,event,leadOut}, con:{...}}
+  const setVal=(pkg,phase,v)=>setEv(e=>({...e,[pkg]:{...e[pkg],[phase]:v}}));
+  const setDay=(phase,v)=>setDays(d=>({...d,[phase]:v}));
+
+  // DSP Total = Conversion + Consideration per phase
+  const totalVals={};
+  PHASES.forEach(p=>{
+    totalVals[p]=((parseFloat(ev.conv[p])||0)+(parseFloat(ev.con[p])||0)).toString();
+  });
+
+  return ce('div',{style:{padding:'24px',maxWidth:1060,margin:'0 auto'}},
+    // Days-per-phase inputs
+    ce('div',{className:'card',style:{marginBottom:24}},
+      ce('div',{className:'slbl',style:{marginBottom:12}},'Days Per Phase'),
+      ce('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}},
+        ...PHASES.map(p=>ce('div',{key:p},
+          ce('div',{className:'mc-lbl',style:{marginBottom:6}},PHASE_LABELS[p]+' Days'),
+          ce('input',{type:'number',placeholder:'0',value:days[p],onChange:ev2=>setDay(p,ev2.target.value),style:{width:'100%'}})
+        ))
+      )
+    ),
+    // Conversion
+    ce(EventBreakdown,{title:'Conversion DSP Daily Spend Breakdown',vals:ev.conv,days,onChange:(p,v)=>setVal('conv',p,v),editable:true}),
+    // Consideration
+    ce(EventBreakdown,{title:'Consideration DSP Daily Spend Breakdown',vals:ev.con,days,onChange:(p,v)=>setVal('con',p,v),editable:true}),
+    // DSP Total (derived, not editable)
+    ce(EventBreakdown,{title:'DSP Total',vals:totalVals,days,onChange:()=>{},editable:false})
+  );
+}
+
 function App(){
   const [step,setStep]=useState('upload');
   const [pkgs,setPkgs]=useState({conv:EP(),con:EP()});
@@ -445,6 +540,8 @@ function App(){
   const priorM=di.month;
   const planM=di.month!==null?(di.month===11?0:di.month+1):null;
   const [tab,setTab]=useState('conv');
+  const [ev,setEv]=useState({conv:EMPTY_EV(),con:EMPTY_EV()});
+  const [evDays,setEvDays]=useState({leadUp:'',event:'',leadOut:''});
   const [cp,setCp]=useState(false);
   
 
@@ -477,7 +574,7 @@ function App(){
   const setSort=useCallback((pkg,k)=>setPkgs(p=>{const c=p[pkg].srt;const nd=c.k===k?(c.d==='asc'?'desc':'asc'):(k==='name'?'asc':'desc');return{...p,[pkg]:{...p[pkg],srt:{k,d:nd}}};}), []);
   const setPB=useCallback((pkg,v)=>setPkgs(p=>({...p,[pkg]:{...p[pkg],bud:v}})),[]);
 
-  const ap=pkgs[tab];
+  const ap=pkgs[tab]||EP();
   const sp=useMemo(()=>calcSplits(ap.items),[ap.items]);
   const sortedItems=useMemo(()=>{
     const {k,d}=ap.srt;
@@ -507,38 +604,44 @@ function App(){
   if(step==='upload')return ce(UploadScreen,{pkgs,onDrop,onProceed:onProc});
 
   return ce('div',null,
-    ce('div',{style:{background:'var(--card)',borderBottom:'1px solid var(--line)',padding:'11px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:20,boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}},
+    ce('div',{style:{background:'var(--card)',borderBottom:'1px solid var(--line)',padding:'11px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}},
       ce('div',{style:{display:'flex',alignItems:'center',gap:12}},
         ce('span',{style:{display:'inline-flex',alignItems:'center',gap:8}},ce('span',{style:{display:'inline-block',width:5,height:18,background:'var(--white)'}}),ce('span',{style:{fontFamily:'var(--sans)',fontSize:'.72rem',letterSpacing:'.34em',color:'var(--gray)',fontWeight:500}},'PLTFRM')),
         ce('span',{style:{fontSize:11,color:'var(--gray-dim)',padding:'2px 7px',background:'var(--card-2)',borderRadius:4,border:'1px solid var(--line-soft)'}},(priorM!==null?Mo(priorM):'?')+' / '+(planM!==null?Mo(planM):'?'))
       ),
       ce('div',{style:{display:'flex',gap:8,marginLeft:'auto'}},
-        ce('button',{className:'btn-secondary',onClick:copyTSV},cp?'Copied':'Copy TSV'),
+        tab!=='event'&&ce('button',{className:'btn-secondary',onClick:copyTSV},cp?'Copied':'Copy TSV'),
         ce('button',{className:'btn-secondary',onClick:()=>setStep('upload')},'Back')
       )
     ),
-    ce('div',{style:{background:'var(--card)',borderBottom:'1px solid var(--line)',padding:'0 20px',display:'flex',position:'sticky',top:'49px',zIndex:19}},
+    ce('div',{style:{background:'var(--card)',borderBottom:'1px solid var(--line)',padding:'10px 20px',display:'flex',gap:6,flexWrap:'wrap'}},
       ['conv','con'].map(t=>ce('button',{key:t,className:`tnav${tab===t?' on':''}`,onClick:()=>setTab(t)},
         {conv:'Conversion',con:'Consideration'}[t],
         pkgs[t].items.length>0&&ce('span',{style:{fontSize:'.75em',opacity:.5,marginLeft:5}},pkgs[t].items.length)
-      ))
+      )),
+      ce('button',{key:'event',className:`tnav${tab==='event'?' on':''}`,onClick:()=>setTab('event'),style:{marginLeft:'auto'}},'Prime Day / Tentpole')
     ),
-    // Summary bar
-    ce('div',{style:{position:'sticky',top:'101px',zIndex:18,background:'var(--black)',padding:'16px 24px',borderBottom:'1px solid var(--line)'}},
-      ce('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:14}},
-        ce('div',{className:'card'},ce('div',{className:'mc-lbl'},(planM!==null?Mo(planM):'Plan')+' Budget Target'),ce('input',{type:'number',value:ap.bud,onChange:ev=>setPB(tab,ev.target.value),placeholder:'0',style:{marginTop:4,width:'100%'}})),
-        ce('div',{className:'card'},ce('div',{className:'mc-lbl'},'Allocated'),ce('div',{className:'mc-val'},fK(sp.t))),
-        ce('div',{className:'card'},ce('div',{className:'mc-lbl'},'Remaining'),ce('div',{style:{marginTop:4}},ce(RemPill,{allocated:sp.t,target:tgt}))),
-        ce('div',{className:'card'},ce('div',{className:'mc-lbl'},(priorM!==null?Mo(priorM):'Current')+' Est. Total'),ce('div',{className:'mc-val',style:{color:'var(--gray)'}},fK(tots.e)))
-      ),
-      ce('div',{style:{display:'flex',alignItems:'center',gap:24,flexWrap:'wrap'}},
-        ce(AllocBar,{sp}),
-        ce('div',{className:'sep'}),
-        ce('div',{style:{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--gray-dim)'}},`Day ${di.de} of ${di.dim}  /  ${di.dr} days remaining`+(di.avg>0?`  /  $${di.avg.toFixed(0)}/day avg`:''))
-      )
-    ),
-    ce(PlanTable,{items:sortedItems,onSet:(id,v)=>setIB(tab,id,v),planM,srt:ap.srt,onSort:k=>setSort(tab,k)}),
-    ce(FinalizePanel,{items:ap.items,planM})
+    // Prime Day / tentpole planner (standalone)
+    tab==='event'
+      ? ce(EventPlanner,{ev,setEv,days:evDays,setDays:setEvDays})
+      : ce('div',null,
+          // Summary bar
+          ce('div',{style:{background:'var(--black)',padding:'16px 24px',borderBottom:'1px solid var(--line)'}},
+            ce('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:14}},
+              ce('div',{className:'card'},ce('div',{className:'mc-lbl'},(planM!==null?Mo(planM):'Plan')+' Budget Target'),ce('input',{type:'number',value:ap.bud,onChange:ev2=>setPB(tab,ev2.target.value),placeholder:'0',style:{marginTop:4,width:'100%'}})),
+              ce('div',{className:'card'},ce('div',{className:'mc-lbl'},'Allocated'),ce('div',{className:'mc-val'},fK(sp.t))),
+              ce('div',{className:'card'},ce('div',{className:'mc-lbl'},'Remaining'),ce('div',{style:{marginTop:4}},ce(RemPill,{allocated:sp.t,target:tgt}))),
+              ce('div',{className:'card'},ce('div',{className:'mc-lbl'},(priorM!==null?Mo(priorM):'Current')+' Est. Total'),ce('div',{className:'mc-val',style:{color:'var(--gray)'}},fK(tots.e)))
+            ),
+            ce('div',{style:{display:'flex',alignItems:'center',gap:24,flexWrap:'wrap'}},
+              ce(AllocBar,{sp}),
+              ce('div',{className:'sep'}),
+              ce('div',{style:{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--gray-dim)'}},`Day ${di.de} of ${di.dim}  /  ${di.dr} days remaining`+(di.avg>0?`  /  $${di.avg.toFixed(0)}/day avg`:''))
+            )
+          ),
+          ce(PlanTable,{items:sortedItems,onSet:(id,v)=>setIB(tab,id,v),planM,srt:ap.srt,onSort:k=>setSort(tab,k)}),
+          ce(FinalizePanel,{items:ap.items,planM})
+        )
   );
 }
 

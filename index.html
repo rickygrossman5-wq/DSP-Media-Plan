@@ -179,7 +179,7 @@ function mergeItems(mtd,lt,de,dr){
     const isP=/performance/i.test(m.name);
     const dr2=de>0?m.cost/de:0;
     const er=dr2*dr;
-    const eoLt=Math.round((l.cost+er)/10)*10;
+    const eoLt=Math.ceil((l.cost+er)/10)*10;
     return{
       id:i,name:m.name,bnb,isP,
       mtd:m.cost,lt:l.cost,dr:dr2,
@@ -550,10 +550,12 @@ function App(){
     setPkgs(p=>({...p,[pkg]:{...p[pkg],fns:{...p[pkg].fns,[type]:file.name},rf:{...p[pkg].rf,[type]:file}}}));
     if(type==='mtd'){
       const {year,month,day}=pfn(file.name);
-      const d=daysInMonth(year,month);const dr=d-day;
-      setDi(x=>({...x,de:day,dr,dim:d,month}));
-      
-      setPkgs(p=>({...p,[pkg]:{...p[pkg],infos:{...p[pkg].infos,mtd:`Day ${day} of ${d} · ${dr} remaining`}}}));
+      const d=daysInMonth(year,month);
+      // MTD report pulled on `day` contains data through the prior day.
+      // Days elapsed = day-1 (completed days); days remaining = everything from the pull date onward (includes today).
+      const de=Math.max(1,day-1);const dr=d-de;
+      setDi(x=>({...x,de,dr,dim:d,month}));
+      setPkgs(p=>({...p,[pkg]:{...p[pkg],infos:{...p[pkg].infos,mtd:`${de} days of data · ${dr} days remaining`}}}));
     }
   },[]);
 
@@ -636,7 +638,7 @@ function App(){
             ce('div',{style:{display:'flex',alignItems:'center',gap:24,flexWrap:'wrap'}},
               ce(AllocBar,{sp}),
               ce('div',{className:'sep'}),
-              ce('div',{style:{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--gray-dim)'}},`Day ${di.de} of ${di.dim}  /  ${di.dr} days remaining`+(di.avg>0?`  /  $${di.avg.toFixed(0)}/day avg`:''))
+              ce('div',{style:{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--gray-dim)'}},`${di.de} days of data  /  ${di.dr} days remaining of ${di.dim}`+(di.avg>0?`  /  $${di.avg.toFixed(0)}/day avg`:''))
             )
           ),
           ce(PlanTable,{items:sortedItems,onSet:(id,v)=>setIB(tab,id,v),planM,srt:ap.srt,onSort:k=>setSort(tab,k)}),

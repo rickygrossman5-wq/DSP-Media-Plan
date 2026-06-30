@@ -647,6 +647,11 @@ function App(){
   );
 }
 
+// Prevent mouse-wheel from changing focused number inputs
+document.addEventListener('wheel',function(e){
+  const el=document.activeElement;
+  if(el&&el.type==='number'&&el===e.target){el.blur();}
+},{passive:true});
 ReactDOM.createRoot(document.getElementById('root')).render(ce(App));
 
 
